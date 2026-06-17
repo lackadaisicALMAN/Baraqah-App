@@ -1,0 +1,29 @@
+import 'package:equatable/equatable.dart';
+import '../../domain/entities/chat_message.dart';
+
+abstract class ChatState extends Equatable {
+  const ChatState();
+
+  @override
+  List<Object?> get props => [];
+}
+
+class ChatInitial extends ChatState {}
+
+class ChatLoading extends ChatState {}
+
+class ChatMessagesLoadSuccess extends ChatState {
+  final List<ChatMessage> messages;
+  const ChatMessagesLoadSuccess(this.messages);
+
+  @override
+  List<Object?> get props => [messages];
+}
+
+class ChatFailure extends ChatState {
+  final String message;
+  const ChatFailure(this.message);
+
+  @override
+  List<Object?> get props => [message];
+}

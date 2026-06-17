@@ -1,0 +1,25 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+.pub-cache/
+.buildlog
+.flutter-plugins
+.flutter-plugins-dependencies
+.flutter-coverage
+.flutter_build/
+flutter_*.png
+ios/Flutter/Flutter.framework
+android/.gradle/
+android/app/build/
+**/generated_plugin_registrant.dart
+**/pubspec.lock
+
+# IntelliJ
+*.iml
+.idea/
+
+# VS Code
+.vscode/
+
+# Build outputs
+build/
