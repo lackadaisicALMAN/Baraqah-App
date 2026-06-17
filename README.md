@@ -11,4 +11,5 @@ Multiplied blessings through shared meals. A social platform for group dining, a
 
 ## Current Status
 - Phase 1: Ideation & Proposal (Completed)
-- Phase 2: System Design & Environment Setup (In Progress)
+- Phase 2: System Design & Environment Setup (Completed)
+- Phase-3: Deployment (in progress)
