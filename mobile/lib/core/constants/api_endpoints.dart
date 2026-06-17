@@ -7,12 +7,12 @@ class ApiEndpoints {
     if (apiHostOverride.isNotEmpty) {
       final host = apiHostOverride.endsWith('/api')
           ? apiHostOverride
-          : '${apiHostOverride.replaceAll(RegExp(r'/+\$'), '')}/api';
+          : '${apiHostOverride.replaceAll(RegExp(r'/+$'), '')}/api';
       return host;
     }
     if (kIsWeb) {
-      final host = Uri.base.host.isNotEmpty ? Uri.base.host : 'localhost';
-      return 'http://$host:3000/api';
+      final origin = Uri.base.origin;
+      return '$origin/api';
     }
     return 'http://10.0.2.2:3000/api';
   }
@@ -20,11 +20,10 @@ class ApiEndpoints {
   static String get socketUrl {
     if (apiHostOverride.isNotEmpty) {
       // remove trailing /api if present
-      return apiHostOverride.replaceAll(RegExp(r'/api/*\$'), '');
+      return apiHostOverride.replaceAll(RegExp(r'/api/*$'), '');
     }
     if (kIsWeb) {
-      final host = Uri.base.host.isNotEmpty ? Uri.base.host : 'localhost';
-      return 'http://$host:3000';
+      return Uri.base.origin;
     }
     return 'http://10.0.2.2:3000';
   }

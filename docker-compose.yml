@@ -108,6 +108,7 @@ services:
       - "${NGINX_PORT:-80}:80"
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./mobile/build/web:/usr/share/nginx/html:ro
     depends_on:
       - backend-node
       - backend-python
