@@ -110,6 +110,30 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
     }
   }
 
+  Future<void> _joinSession() async {
+    setState(() => _isActionLoading = true);
+    try {
+      final apiClient = getIt<ApiClient>();
+      await apiClient.post('${ApiEndpoints.baseUrl}/sessions/${widget.sessionId}/join', data: {
+        'transport_mode': 'MEET_THERE',
+      });
+      _bloc.add(GetSessionDetailsRequested(widget.sessionId));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Joined dining plan successfully!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to join session: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isActionLoading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = context.read<AuthBloc>().state;
@@ -258,6 +282,35 @@ class _SessionDetailPageState extends State<SessionDetailPage> {
   }
 
   Widget _buildCheckinFlow(Session session, bool isHost, bool hasCheckedIn, String? currentUserId) {
+    final isAttendee = session.attendees.any((a) => a.userId == currentUserId);
+
+    if (!isAttendee) {
+      if (session.status == 'OPEN') {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppButton(
+              label: 'Join Dining Plan',
+              onPressed: _joinSession,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Join this pool to chat, ride-share, check-in, and write reviews.',
+              style: TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        );
+      } else {
+        return const Center(
+          child: Text(
+            'This plan is no longer accepting new members.',
+            style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),
+          ),
+        );
+      }
+    }
+
     if (session.status == 'OPEN' || session.status == 'LOCKED') {
       if (isHost) {
         return Column(

@@ -162,22 +162,50 @@ async function submitJoinRequest(sessionId, userId, data) {
     throw err;
   }
 
+  if (session.current_attendees >= session.max_attendees) {
+    const err = new Error('Session is full');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // 1. Create join request automatically as ACCEPTED
   const request = await sessionModel.createJoinRequest({
     sessionId,
     requesterId: userId,
-    transportMode: data.transport_mode,
+    transportMode: data.transport_mode || 'MEET_THERE',
     message: data.message,
   });
+  await sessionModel.updateJoinRequestStatus(request.id, 'ACCEPTED');
 
+  // 2. Add attendee in SQL
+  const attendee = await sessionModel.addAttendee({
+    sessionId,
+    userId,
+    joinRequestId: request.id,
+    transportMode: data.transport_mode || 'MEET_THERE',
+  });
+
+  // 3. Update Redis cache
   const redis = getRedis();
-  await redis.zadd(
-    RedisKeys.sessionPendingRequests(sessionId),
-    Date.now(),
-    userId
-  );
-  await redis.expire(RedisKeys.sessionPendingRequests(sessionId), RedisTTL.SESSION);
+  await redis.sadd(RedisKeys.sessionAttendees(sessionId), userId);
+  await redis.zrem(RedisKeys.sessionPendingRequests(sessionId), userId);
 
-  emitToSession(sessionId, 'JOIN_REQUEST', { request });
+  // 4. Update session status to LOCKED if full
+  const updatedSession = await sessionModel.findById(sessionId);
+  if (updatedSession && updatedSession.current_attendees >= updatedSession.max_attendees) {
+    await sessionModel.updateStatus(sessionId, 'LOCKED');
+    await redis.hset(RedisKeys.sessionState(sessionId), 'status', 'LOCKED');
+  }
+
+  // 5. Emit socket events & add system message in MongoDB chat
+  await GroupChat.addMessage(sessionId, {
+    senderId: 'system',
+    type: 'SYSTEM',
+    content: `A new member joined the session.`,
+    participantIds: [userId],
+  });
+
+  emitToSession(sessionId, 'REQUEST_ACCEPTED', { attendee });
 
   return request;
 }
